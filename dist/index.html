@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <script type="systemjs-importmap">
+            {
+                "imports": {
+                    "react": "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js",
+                    "react-dom": "https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"
+                }
+            }
+        </script>
+        <div id="root"></div>
+        <!-- <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.1/system.min.js"
+            integrity="sha512-5QtTSqKLlp9G1SmuQYBgk5t+rZ0/6yaqL/KGzq1Js66iUdLSgBBhIeOWGQa0GAe4fbo+gcw2dGzBdq2FdHGp9w=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script> -->
+        <script>
+            function SystemJS() {}
+
+            function load(id) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = id;
+                    script.async = true;
+                    document.head.appendChild(script);
+                    script.addEventListener('load', function () {
+                        console.log('SystemJS 中的 script 加載完成');
+
+                        // 加載完成後，可以取得全局的依賴與聲明
+                        let _lastRegister = lastRegister;
+                        console.log('_lastRegister:', _lastRegister);
+                        lastRegister = null;
+
+                        if (!_lastRegister) {
+                            // 表示沒有其他依賴
+                            resolve([[], function () {}]);
+                        } else {
+                            resolve(_lastRegister);
+                        }
+                    });
+                });
+            }
+
+            // System如何執行打包後的 index.js
+            SystemJS.prototype.import = function (id) {
+                return new Promise((resolve, reject) => {
+                    const lastSepIdx = window.location.href.lastIndexOf('/');
+                    const baseURL = window.location.href.slice(0, lastSepIdx + 1);
+                    if (id.startsWith('./')) {
+                        resolve(baseURL + id.slice(2));
+                    }
+                })
+                    .then((data) => {
+                        return load(data);
+                    })
+                    .then((registerDepsAndDeclare) => {
+                        console.log('registerDepsAndDeclare:', registerDepsAndDeclare);
+
+                        function _export() {}
+                        // 取得 setters 和 execute
+                        let declare = registerDepsAndDeclare[1](_export);
+
+                        // 加載 react 和 react-dom，然後調用 setter
+
+                        console.log('declare:', declare);
+                    });
+            };
+
+            // 要將註冊的依賴和聲明，暴露到外部
+            let lastRegister;
+            SystemJS.prototype.register = function (deps, declare) {
+                lastRegister = [deps, declare];
+            };
+
+            const System = new SystemJS();
+
+            // 這裡可以動態加載模塊
+            System.import('./index.js');
+        </script>
+    </body>
+</html>
